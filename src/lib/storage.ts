@@ -35,11 +35,12 @@ function seedQuestions(existing: SurveyQuestion[] | undefined) {
 
 function seedUsers(existing: User[] | undefined) {
   if (existing && existing.length > 0) return existing;
-  return [
+  const defaults: User[] = [
     { id: "ADMIN-001", name: "Admin", role: "admin" },
     { id: "SUP-001", name: "Supervisor 1", role: "supervisor" },
     { id: "SUP-002", name: "Supervisor 2", role: "supervisor" },
   ];
+  return defaults;
 }
 
 function normalizeDb(db: Partial<SurveyDb>): SurveyDb {
