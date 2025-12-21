@@ -12,17 +12,25 @@ type Question = {
   active: boolean;
 };
 
-const emptyQuestion = {
+type FormQuestion = {
+  text: Record<string, string>;
+  type: Question["type"];
+  category: Question["category"];
+  required: boolean;
+  order: number;
+};
+
+const emptyQuestion: FormQuestion = {
   text: { fa: "", en: "", ar: "" },
-  type: "rating" as const,
-  category: "general" as const,
+  type: "rating",
+  category: "general",
   required: true,
   order: 1,
 };
 
 export default function QuestionsAdmin() {
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [form, setForm] = useState(emptyQuestion);
+  const [form, setForm] = useState<FormQuestion>(emptyQuestion);
   const [message, setMessage] = useState("");
 
   const load = async () => {
