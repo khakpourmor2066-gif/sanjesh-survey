@@ -14,7 +14,8 @@ function isRecent(dateIso: string, windowMs: number) {
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { payload?: AuthPayload };
-  if (!body.payload) {
+  const payload = body.payload;
+  if (!payload) {
     return NextResponse.json(
       { error: "missing_payload" },
       { status: 400 }
@@ -22,11 +23,11 @@ export async function POST(request: Request) {
   }
 
   const secret = process.env.AUTH_SHARED_SECRET ?? "shared-mvp-secret";
-  if (!verifyAuthPayload(body.payload, secret)) {
+  if (!verifyAuthPayload(payload, secret)) {
     return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
   }
 
-  if (!isRecent(body.payload.issuedAt, TOKEN_TTL_MS)) {
+  if (!isRecent(payload.issuedAt, TOKEN_TTL_MS)) {
     return NextResponse.json({ error: "token_expired" }, { status: 401 });
   }
 
@@ -36,8 +37,8 @@ export async function POST(request: Request) {
 
   const recentResponses = db.responses.filter((response) => {
     if (
-      response.customerId !== body.payload.customerId ||
-      response.employeeId !== body.payload.employeeId
+      response.customerId !== payload.customerId ||
+      response.employeeId !== payload.employeeId
     ) {
       return false;
     }
@@ -62,14 +63,14 @@ export async function POST(request: Request) {
   if (!response) {
     response = {
       id: crypto.randomUUID(),
-      customerId: body.payload.customerId,
-      employeeId: body.payload.employeeId,
-      groupId: body.payload.groupId,
+      customerId: payload.customerId,
+      employeeId: payload.employeeId,
+      groupId: payload.groupId,
       status: "in_progress",
       startedAt: nowIso,
       lastActivityAt: nowIso,
       lastQuestionIndex: 0,
-      lang: body.payload.lang ?? "fa",
+      lang: payload.lang ?? "fa",
       editToken: crypto.randomUUID(),
       answers: [],
     } satisfies SurveyResponse;
@@ -78,12 +79,12 @@ export async function POST(request: Request) {
 
   const session: SurveySession = {
     id: crypto.randomUUID(),
-    customerId: body.payload.customerId,
-    employeeId: body.payload.employeeId,
-    groupId: body.payload.groupId,
+    customerId: payload.customerId,
+    employeeId: payload.employeeId,
+    groupId: payload.groupId,
     responseId: response.id,
     createdAt: nowIso,
-    lang: body.payload.lang ?? "fa",
+    lang: payload.lang ?? "fa",
   };
   db.sessions.push(session);
   writeDb(db);
