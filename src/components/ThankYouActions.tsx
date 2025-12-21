@@ -16,7 +16,9 @@ export default function ThankYouActions({ lang, editToken, labels }: Props) {
   const router = useRouter();
 
   const handleHome = () => {
-    router.replace(`/${lang}`);
+    fetch("/api/survey/thank-you-closed", { method: "POST" }).finally(() => {
+      router.replace(`/${lang}`);
+    });
   };
 
   const handleLogout = async () => {

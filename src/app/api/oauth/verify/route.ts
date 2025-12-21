@@ -99,6 +99,18 @@ export async function POST(request: Request) {
     sameSite: "lax",
     path: "/",
   });
+  responseObj.cookies.set("survey_logged_out", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+  responseObj.cookies.set("survey_thank_you_closed", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
 
   return responseObj;
 }

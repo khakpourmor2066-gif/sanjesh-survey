@@ -18,8 +18,10 @@ export default async function ThankYou({
   const t = getDictionary(lang);
   const cookieStore = await cookies();
   const loggedOut = cookieStore.get("survey_logged_out")?.value === "1";
+  const thankYouClosed =
+    cookieStore.get("survey_thank_you_closed")?.value === "1";
 
-  if (loggedOut) {
+  if (loggedOut || thankYouClosed) {
     redirect(`/${lang}`);
   }
 
