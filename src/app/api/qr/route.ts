@@ -18,7 +18,8 @@ export async function GET(request: Request) {
     },
   });
 
-  return new Response(png, {
+  const body = new Uint8Array(png);
+  return new Response(body, {
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": "public, max-age=86400",
