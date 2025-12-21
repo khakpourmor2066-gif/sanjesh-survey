@@ -6,6 +6,8 @@ import { employees as defaultEmployees } from "./employees";
 
 const dataDir = path.join(process.cwd(), "data");
 const dbPath = path.join(dataDir, "db.json");
+const useMemoryOnly = process.env.VERCEL === "1" || process.env.VERCEL === "true";
+let memoryDb: SurveyDb | null = null;
 
 const emptyDb: SurveyDb = {
   sessions: [],
@@ -54,6 +56,9 @@ function normalizeDb(db: Partial<SurveyDb>): SurveyDb {
 }
 
 function ensureDbFile() {
+  if (useMemoryOnly) {
+    return;
+  }
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
@@ -63,17 +68,38 @@ function ensureDbFile() {
 }
 
 export function readDb(): SurveyDb {
-  ensureDbFile();
-  const raw = fs.readFileSync(dbPath, "utf-8");
-  const parsed = JSON.parse(raw) as Partial<SurveyDb>;
-  const normalized = normalizeDb(parsed);
-  if (!parsed.employees || !parsed.questions || !parsed.users) {
-    writeDb(normalized);
+  if (useMemoryOnly) {
+    if (!memoryDb) {
+      memoryDb = normalizeDb({});
+    }
+    return memoryDb;
   }
-  return normalized;
+  try {
+    ensureDbFile();
+    const raw = fs.readFileSync(dbPath, "utf-8");
+    const parsed = JSON.parse(raw) as Partial<SurveyDb>;
+    const normalized = normalizeDb(parsed);
+    if (!parsed.employees || !parsed.questions || !parsed.users) {
+      writeDb(normalized);
+    }
+    return normalized;
+  } catch {
+    if (!memoryDb) {
+      memoryDb = normalizeDb({});
+    }
+    return memoryDb;
+  }
 }
 
 export function writeDb(db: SurveyDb) {
-  ensureDbFile();
-  fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+  if (useMemoryOnly) {
+    memoryDb = db;
+    return;
+  }
+  try {
+    ensureDbFile();
+    fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+  } catch {
+    memoryDb = db;
+  }
 }
