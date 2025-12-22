@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin";
 import { getPortalSession } from "@/lib/portal";
 import { readDb } from "@/lib/storage";
+import { getCachedReport, setCachedReport } from "@/lib/report-cache";
 
 type DailyBucket = {
   date: string;
@@ -26,6 +27,14 @@ function isInRange(dateValue: string | undefined, start: Date | null, end: Date 
   return true;
 }
 
+function getPreviousRange(start: Date, end: Date) {
+  const rangeMs = end.getTime() - start.getTime();
+  if (rangeMs < 0) return null;
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(start.getTime() - rangeMs - 1);
+  return { prevStart, prevEnd };
+}
+
 export async function GET(request: Request) {
   const isAdmin = await isAdminRequest();
   const portal = await getPortalSession();
@@ -42,6 +51,11 @@ export async function GET(request: Request) {
   }
 
   const { startDate, endDate } = parseRange(searchParams);
+  const cacheKey = `supervisor:${supervisorId}:${searchParams.get("start") ?? ""}:${searchParams.get("end") ?? ""}`;
+  const cached = getCachedReport<unknown>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
 
   const db = readDb();
   const questionMap = new Map(db.questions.map((q) => [q.id, q]));
@@ -66,13 +80,17 @@ export async function GET(request: Request) {
 
   const daily = new Map<string, DailyBucket>();
 
-  db.responses
+  const filteredResponses = db.responses
     .filter((response) => response.status === "completed")
     .filter((response) => teamIds.has(response.employeeId))
     .filter((response) =>
       isInRange(response.completedAt ?? response.lastActivityAt, startDate, endDate)
-    )
-    .forEach((response) => {
+    );
+
+  let totalScore = 0;
+  let scoreCount = 0;
+
+  filteredResponses.forEach((response) => {
       const employeeRecord = db.employees.find(
         (item) => item.id === response.employeeId
       );
@@ -102,6 +120,8 @@ export async function GET(request: Request) {
         if (answer.score === undefined || answer.score === null) {
           return;
         }
+        totalScore += answer.score;
+        scoreCount += 1;
         employee.totalScore += answer.score;
         employee.scoreCount += 1;
 
@@ -143,10 +163,54 @@ export async function GET(request: Request) {
     count: bucket.count,
   }));
 
-  return NextResponse.json({
+  const comparison =
+    startDate && endDate
+      ? (() => {
+          const prevRange = getPreviousRange(startDate, endDate);
+          if (!prevRange) return null;
+          let prevTotal = 0;
+          let prevCount = 0;
+          let prevResponses = 0;
+          db.responses
+            .filter((response) => response.status === "completed")
+            .filter((response) => teamIds.has(response.employeeId))
+            .filter((response) =>
+              isInRange(
+                response.completedAt ?? response.lastActivityAt,
+                prevRange.prevStart,
+                prevRange.prevEnd
+              )
+            )
+            .forEach((response) => {
+              prevResponses += 1;
+              response.answers.forEach((answer) => {
+                if (answer.score === undefined || answer.score === null) return;
+                prevTotal += answer.score;
+                prevCount += 1;
+              });
+            });
+          const prevAverage = prevCount ? prevTotal / prevCount : 0;
+          const currentAverage = scoreCount ? totalScore / scoreCount : 0;
+          return {
+            previousAverage: prevAverage,
+            previousResponses: prevResponses,
+            averageDelta: currentAverage - prevAverage,
+            responseDelta: filteredResponses.length - prevResponses,
+          };
+        })()
+      : null;
+
+  const payload = {
     employees: employeeRows,
     team: questionRows,
     daily: dailyRows,
     questions: Array.from(questionMap.values()),
-  });
+    comparison,
+    summary: {
+      averageScore: scoreCount ? totalScore / scoreCount : 0,
+      responseCount: filteredResponses.length,
+    },
+  };
+  setCachedReport(cacheKey, payload);
+  return NextResponse.json(payload);
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { readDb } from "@/lib/storage";
+import { isAdminRequest } from "@/lib/admin";
+import { getPortalSession } from "@/lib/portal";
 
 type DailyPoint = {
   date: string;
@@ -12,6 +14,14 @@ export async function GET(request: Request) {
   const employeeId = searchParams.get("employeeId");
   if (!employeeId) {
     return NextResponse.json({ error: "missing_employee" }, { status: 400 });
+  }
+
+  const isAdmin = await isAdminRequest();
+  const portal = await getPortalSession();
+  if (!isAdmin) {
+    if (!portal || portal.role !== "employee" || portal.employeeId !== employeeId) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
   }
 
   const db = readDb();

@@ -32,6 +32,9 @@ export default function SurveyPage({
   const [finalComment, setFinalComment] = useState("");
   const [localError, setLocalError] = useState("");
   const [showLanding, setShowLanding] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [isOnline, setIsOnline] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const completedRef = useRef(false);
   const commentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -102,6 +105,17 @@ export default function SurveyPage({
   }, [editToken, t.problem]);
 
   useEffect(() => {
+    const updateStatus = () => setIsOnline(navigator.onLine);
+    updateStatus();
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+    return () => {
+      window.removeEventListener("online", updateStatus);
+      window.removeEventListener("offline", updateStatus);
+    };
+  }, []);
+
+  useEffect(() => {
     const handlePageHide = () => {
       if (completedRef.current) return;
       fetch("/api/survey/abandon", { method: "POST", keepalive: true }).catch(
@@ -121,7 +135,12 @@ export default function SurveyPage({
       yesNoValue?: boolean;
     }
   ) => {
-    await fetch("/api/survey/answer", {
+    if (!isOnline) {
+      setSaveStatus("error");
+      return;
+    }
+    setSaveStatus("saving");
+    const res = await fetch("/api/survey/answer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -133,14 +152,20 @@ export default function SurveyPage({
         allowEdit,
       }),
     });
+    setSaveStatus(res.ok ? "saved" : "error");
   };
 
   const saveProgress = async (index: number) => {
-    await fetch("/api/survey/progress", {
+    if (!isOnline) {
+      setSaveStatus("error");
+      return;
+    }
+    const res = await fetch("/api/survey/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ index }),
     });
+    setSaveStatus(res.ok ? "saved" : "error");
   };
 
   const handleScore = async (score: number) => {
@@ -240,6 +265,11 @@ export default function SurveyPage({
   };
 
   const handleFinish = async () => {
+    if (!isOnline) {
+      setLocalError(t.problem);
+      return;
+    }
+    setSubmitting(true);
     const res = await fetch("/api/survey/finish", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -252,6 +282,7 @@ export default function SurveyPage({
     } else {
       setLocalError(t.problem);
     }
+    setSubmitting(false);
   };
 
   if (loading) {
@@ -357,6 +388,9 @@ export default function SurveyPage({
             <p className="text-xs text-[var(--muted)]">
               {currentQuestion?.required ? t.required : t.optional}
             </p>
+            {!isOnline ? (
+              <p className="text-xs text-rose-600">{t.offlineNotice}</p>
+            ) : null}
           </div>
 
           {!isFinalStep && currentQuestion ? (
@@ -520,13 +554,23 @@ export default function SurveyPage({
             >
               {t.previous}
             </button>
+            <div className="text-xs text-[var(--muted)]">
+              {saveStatus === "saving"
+                ? t.saving
+                : saveStatus === "saved"
+                  ? t.saved
+                  : saveStatus === "error"
+                    ? t.offlineNotice
+                    : ""}
+            </div>
             {isFinalStep ? (
               <button
                 type="button"
                 onClick={handleFinish}
-                className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white shadow hover:brightness-110"
+                disabled={submitting}
+                className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white shadow hover:brightness-110 disabled:opacity-70"
               >
-                {t.finish}
+                {submitting ? t.submitting : t.finish}
               </button>
             ) : (
               <button

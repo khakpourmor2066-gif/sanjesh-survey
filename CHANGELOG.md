@@ -15,6 +15,9 @@ All notable changes to this project are documented in this file.
 - Added supervisor dashboard for team-only reporting.
 - Added date range filters plus Excel/PDF export for admin reports.
 - Added survey answer summary before final submission.
+- Added report caching and date-range comparisons.
+- Added portal access checks for employee reports.
+- Added offline/save status indicators in survey flow.
 
 ## 2025-12-21
 - Deployed Phase 1 MVP on Vercel with stable alias setup.

@@ -181,6 +181,7 @@ export default function EmployeeDashboard({
                   <div className="h-2 flex-1 rounded-full bg-slate-100">
                     <div
                       className="h-2 rounded-full bg-[var(--accent-strong)]"
+                      title={`${row.averageScore.toFixed(2)} (${row.count})`}
                       style={{ width: `${Math.min(row.averageScore * 10, 100)}%` }}
                     />
                   </div>

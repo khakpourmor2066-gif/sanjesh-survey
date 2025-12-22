@@ -72,3 +72,18 @@ body {
 .glow-ring {
   box-shadow: 0 0 0 6px var(--ring);
 }
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .surface {
+    box-shadow: none;
+    border-color: #e5e7eb;
+  }
+}

@@ -25,6 +25,18 @@ type DailyReport = {
   count: number;
 };
 
+type ReportComparison = {
+  previousAverage: number;
+  previousResponses: number;
+  averageDelta: number;
+  responseDelta: number;
+} | null;
+
+type ReportSummary = {
+  averageScore: number;
+  responseCount: number;
+};
+
 type User = {
   id: string;
   name: string;
@@ -36,11 +48,15 @@ export default function ReportsAdmin() {
     employees: EmployeeReport[];
     questions: QuestionReport[];
     daily: DailyReport[];
+    comparison?: ReportComparison;
+    summary?: ReportSummary;
   } | null>(null);
   const [managerLoading, setManagerLoading] = useState(true);
   const [supervisor, setSupervisor] = useState<{
     employees: EmployeeReport[];
     daily: DailyReport[];
+    comparison?: ReportComparison;
+    summary?: ReportSummary;
   } | null>(null);
   const [supervisorLoading, setSupervisorLoading] = useState(false);
   const [supervisors, setSupervisors] = useState<User[]>([]);
@@ -51,6 +67,7 @@ export default function ReportsAdmin() {
 
   useEffect(() => {
     const loadManager = async () => {
+      setManagerLoading(true);
       const params = new URLSearchParams();
       if (startDate) params.set("start", startDate);
       if (endDate) params.set("end", endDate);
@@ -75,6 +92,7 @@ export default function ReportsAdmin() {
   useEffect(() => {
     if (!selectedSupervisor) {
       setSupervisor(null);
+      setSupervisorLoading(false);
       return;
     }
     const loadSupervisor = async () => {
@@ -257,7 +275,7 @@ export default function ReportsAdmin() {
         <p className="mt-2 text-sm text-slate-500">
           خلاصه عملکرد سازمان و میانگین امتیازها.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="no-print mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={exportManager}
@@ -292,7 +310,7 @@ export default function ReportsAdmin() {
             <span className="text-xs text-emerald-600">{exportMessage}</span>
           ) : null}
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        <div className="no-print mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
           <span>فیلتر بازه زمانی:</span>
           <input
             type="date"
@@ -315,12 +333,26 @@ export default function ReportsAdmin() {
           <p className="mt-3 text-3xl font-semibold">
             {weightedAverage ? weightedAverage.toFixed(2) : "—"}
           </p>
+          {manager?.comparison ? (
+            <p className="mt-2 text-xs text-slate-500">
+              مقایسه با بازه قبل:{" "}
+              {manager.comparison.averageDelta >= 0 ? "▲" : "▼"}{" "}
+              {manager.comparison.averageDelta.toFixed(2)}
+            </p>
+          ) : null}
         </div>
         <div className="rounded-3xl bg-white p-6 shadow">
           <p className="text-xs text-slate-500">تعداد کل پاسخ‌ها</p>
           <p className="mt-3 text-3xl font-semibold">
             {totalResponses || "—"}
           </p>
+          {manager?.comparison ? (
+            <p className="mt-2 text-xs text-slate-500">
+              تغییر نسبت به قبل:{" "}
+              {manager.comparison.responseDelta >= 0 ? "▲" : "▼"}{" "}
+              {manager.comparison.responseDelta}
+            </p>
+          ) : null}
         </div>
         <div className="rounded-3xl bg-white p-6 shadow">
           <p className="text-xs text-slate-500">تعداد کارمندان</p>
@@ -431,6 +463,7 @@ export default function ReportsAdmin() {
                 <div className="h-2 flex-1 rounded-full bg-slate-100">
                   <div
                     className="h-2 rounded-full bg-slate-900"
+                    title={`${row.averageScore.toFixed(2)} (${row.count})`}
                     style={{ width: `${Math.min(row.averageScore * 10, 100)}%` }}
                   />
                 </div>
@@ -518,6 +551,15 @@ export default function ReportsAdmin() {
             ) : (
               <p className="text-sm text-slate-500">داده‌ای ثبت نشده است.</p>
             )}
+            {supervisor?.comparison ? (
+              <div className="rounded-2xl border border-slate-200 px-4 py-3 text-xs text-slate-500">
+                مقایسه با بازه قبل:{" "}
+                {supervisor.comparison.averageDelta >= 0 ? "▲" : "▼"}{" "}
+                {supervisor.comparison.averageDelta.toFixed(2)} | تغییر پاسخ‌ها:{" "}
+                {supervisor.comparison.responseDelta >= 0 ? "▲" : "▼"}{" "}
+                {supervisor.comparison.responseDelta}
+              </div>
+            ) : null}
             {supervisor?.daily.length ? (
               <div className="mt-4 grid gap-2">
                 {supervisor.daily.map((row) => (
@@ -526,6 +568,7 @@ export default function ReportsAdmin() {
                     <div className="h-2 flex-1 rounded-full bg-slate-100">
                       <div
                         className="h-2 rounded-full bg-slate-900"
+                        title={`${row.averageScore.toFixed(2)} (${row.count})`}
                         style={{ width: `${Math.min(row.averageScore * 10, 100)}%` }}
                       />
                     </div>
