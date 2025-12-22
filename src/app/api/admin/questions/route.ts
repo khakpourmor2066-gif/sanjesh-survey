@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { readDb, writeDb } from "@/lib/storage";
-import { isAdminRequest } from "@/lib/admin";
+import { isAdminRequest, isSameOrigin } from "@/lib/admin";
 import type { SurveyQuestion, QuestionType, QuestionCategory } from "@/lib/types";
 
 type QuestionPayload = {
@@ -23,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "bad_origin" }, { status: 403 });
+  }
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -48,6 +51,9 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "bad_origin" }, { status: 403 });
+  }
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }

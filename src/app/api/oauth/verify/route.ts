@@ -6,6 +6,10 @@ import { verifyAuthPayload, type AuthPayload } from "@/lib/auth";
 
 const TOKEN_TTL_MS = 5 * 60 * 1000;
 const DAILY_LIMIT_MS = 24 * 60 * 60 * 1000;
+const secureCookie =
+  process.env.NODE_ENV === "production" ||
+  process.env.VERCEL === "1" ||
+  process.env.VERCEL === "true";
 
 function isRecent(dateIso: string, windowMs: number) {
   const issued = new Date(dateIso).getTime();
@@ -98,18 +102,21 @@ export async function POST(request: Request) {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
+    secure: secureCookie,
   });
   responseObj.cookies.set("survey_logged_out", "", {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 0,
+    secure: secureCookie,
   });
   responseObj.cookies.set("survey_thank_you_closed", "", {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 0,
+    secure: secureCookie,
   });
 
   return responseObj;

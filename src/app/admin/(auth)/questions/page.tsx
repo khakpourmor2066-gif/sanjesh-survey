@@ -32,6 +32,7 @@ export default function QuestionsAdmin() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [form, setForm] = useState<FormQuestion>(emptyQuestion);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     const res = await fetch("/api/admin/questions");
@@ -39,11 +40,14 @@ export default function QuestionsAdmin() {
       const data = (await res.json()) as { questions: Question[] };
       setQuestions(data.questions);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
     load().catch(() => null);
   }, []);
+
+  const canSubmit = form.text.fa.trim().length > 0;
 
   const addQuestion = async () => {
     setMessage("");
@@ -173,7 +177,8 @@ export default function QuestionsAdmin() {
         <button
           type="button"
           onClick={addQuestion}
-          className="mt-4 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+          disabled={!canSubmit}
+          className="mt-4 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           افزودن سوال
         </button>
@@ -185,7 +190,14 @@ export default function QuestionsAdmin() {
       <div className="rounded-3xl bg-white p-8 shadow">
         <h2 className="text-xl font-semibold">لیست سوالات</h2>
         <div className="mt-6 grid gap-6">
-          {questions.map((question) => (
+          {loading ? (
+            <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+          ) : questions.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              هنوز سوالی ثبت نشده است.
+            </p>
+          ) : (
+            questions.map((question) => (
             <div
               key={question.id}
               className="rounded-2xl border border-slate-200 p-4"
@@ -343,7 +355,8 @@ export default function QuestionsAdmin() {
                 ذخیره تغییرات
               </button>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </main>

@@ -27,6 +27,7 @@ export default function EmployeesAdmin() {
   const [users, setUsers] = useState<User[]>([]);
   const [form, setForm] = useState(emptyEmployee);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     const [empRes, userRes] = await Promise.all([
@@ -41,6 +42,7 @@ export default function EmployeesAdmin() {
       const data = (await userRes.json()) as { users: User[] };
       setUsers(data.users);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -48,6 +50,8 @@ export default function EmployeesAdmin() {
   }, []);
 
   const supervisors = users.filter((user) => user.role === "supervisor");
+  const canSubmit =
+    form.name.fa.trim().length > 0 && form.department.fa.trim().length > 0;
 
   const addEmployee = async () => {
     setMessage("");
@@ -167,7 +171,8 @@ export default function EmployeesAdmin() {
         <button
           type="button"
           onClick={addEmployee}
-          className="mt-4 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+          disabled={!canSubmit}
+          className="mt-4 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           افزودن کارمند
         </button>
@@ -179,7 +184,14 @@ export default function EmployeesAdmin() {
       <div className="rounded-3xl bg-white p-8 shadow">
         <h2 className="text-xl font-semibold">لیست کارمندان</h2>
         <div className="mt-6 grid gap-6">
-          {employees.map((employee) => (
+          {loading ? (
+            <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+          ) : employees.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              هنوز کارمندی ثبت نشده است.
+            </p>
+          ) : (
+            employees.map((employee) => (
             <div
               key={employee.id}
               className="rounded-2xl border border-slate-200 p-4"
@@ -346,7 +358,8 @@ export default function EmployeesAdmin() {
                 ذخیره تغییرات
               </button>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </main>

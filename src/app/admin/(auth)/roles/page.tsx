@@ -23,6 +23,7 @@ export default function RolesAdmin() {
     employeeId: "",
   });
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     const [usersRes, empRes] = await Promise.all([
@@ -37,11 +38,14 @@ export default function RolesAdmin() {
       const data = (await empRes.json()) as { employees: Employee[] };
       setEmployees(data.employees);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
     load().catch(() => null);
   }, []);
+
+  const canSubmit = form.name.trim().length > 0;
 
   const addUser = async () => {
     setMessage("");
@@ -130,7 +134,8 @@ export default function RolesAdmin() {
         <button
           type="button"
           onClick={addUser}
-          className="mt-4 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+          disabled={!canSubmit}
+          className="mt-4 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           افزودن کاربر
         </button>
@@ -142,7 +147,14 @@ export default function RolesAdmin() {
       <div className="rounded-3xl bg-white p-8 shadow">
         <h2 className="text-xl font-semibold">لیست نقش‌ها</h2>
         <div className="mt-6 grid gap-4">
-          {users.map((user) => (
+          {loading ? (
+            <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+          ) : users.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              هنوز کاربری ثبت نشده است.
+            </p>
+          ) : (
+            users.map((user) => (
             <div
               key={user.id}
               className="rounded-2xl border border-slate-200 p-4"
@@ -213,7 +225,8 @@ export default function RolesAdmin() {
                 </button>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </main>

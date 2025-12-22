@@ -16,6 +16,7 @@ export default function AuthPage({
   const employeeId = searchParams.get("employeeId");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const canSubmit = Boolean(employeeId);
 
   const handleLogin = async () => {
     if (!employeeId) {
@@ -81,10 +82,15 @@ export default function AuthPage({
               type="button"
               onClick={handleLogin}
               className="rounded-full bg-[var(--accent-strong)] px-8 py-3 text-center text-sm font-semibold text-white shadow hover:brightness-110 disabled:opacity-70"
-              disabled={loading}
+              disabled={loading || !canSubmit}
             >
               {loading ? t.redirecting : t.login}
             </button>
+            {loading ? (
+              <p className="text-xs text-[var(--muted)]">
+                {t.redirecting}
+              </p>
+            ) : null}
             {error ? (
               <p className="text-sm font-medium text-rose-600">{error}</p>
             ) : null}

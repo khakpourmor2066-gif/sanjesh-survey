@@ -4,6 +4,11 @@ import crypto from "crypto";
 import { readDb, writeDb } from "@/lib/storage";
 import type { SurveySession } from "@/lib/types";
 
+const secureCookie =
+  process.env.NODE_ENV === "production" ||
+  process.env.VERCEL === "1" ||
+  process.env.VERCEL === "true";
+
 export async function GET(request: Request) {
   const db = readDb();
   const cookieStore = await cookies();
@@ -49,6 +54,7 @@ export async function GET(request: Request) {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
+      secure: secureCookie,
     });
     return responseObj;
   }
