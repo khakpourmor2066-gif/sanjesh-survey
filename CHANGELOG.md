@@ -1,0 +1,18 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+## 2025-12-22
+- Hardened admin access: same-origin checks for write APIs and stricter admin cookie settings.
+- Improved admin UX: loading/empty states and safer form submission in Employees/Questions/Roles pages.
+- Improved auth UX: disabled login without employeeId and clearer loading feedback.
+- Survey cookies now use secure flags in production.
+
+## 2025-12-21
+- Deployed Phase 1 MVP on Vercel with stable alias setup.
+- Added mock auth flow and OAuth payload verification.
+- Fixed build issues (TypeScript, QR response body, qrcode types).
+- Added in-memory fallback storage for Vercel runtime.
+- Added thank-you exit handling to prevent returning after logout/home.
+- UI styling aligned to the reference layout and RTL support.
+
