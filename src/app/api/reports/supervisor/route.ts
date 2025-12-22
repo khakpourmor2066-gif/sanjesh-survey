@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin";
+import { getPortalSession } from "@/lib/portal";
 import { readDb } from "@/lib/storage";
 
 type DailyBucket = {
@@ -8,16 +9,39 @@ type DailyBucket = {
   count: number;
 };
 
+function parseRange(searchParams: URLSearchParams) {
+  const start = searchParams.get("start");
+  const end = searchParams.get("end");
+  const startDate = start ? new Date(`${start}T00:00:00.000Z`) : null;
+  const endDate = end ? new Date(`${end}T23:59:59.999Z`) : null;
+  return { startDate, endDate };
+}
+
+function isInRange(dateValue: string | undefined, start: Date | null, end: Date | null) {
+  if (!dateValue) return false;
+  const time = new Date(dateValue).getTime();
+  if (Number.isNaN(time)) return false;
+  if (start && time < start.getTime()) return false;
+  if (end && time > end.getTime()) return false;
+  return true;
+}
+
 export async function GET(request: Request) {
-  if (!(await isAdminRequest())) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const isAdmin = await isAdminRequest();
+  const portal = await getPortalSession();
 
   const { searchParams } = new URL(request.url);
-  const supervisorId = searchParams.get("supervisorId");
+  const supervisorId =
+    searchParams.get("supervisorId") ??
+    (portal?.role === "supervisor" ? portal.userId : null);
   if (!supervisorId) {
     return NextResponse.json({ error: "missing_supervisor" }, { status: 400 });
   }
+  if (!isAdmin && portal?.role !== "supervisor") {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const { startDate, endDate } = parseRange(searchParams);
 
   const db = readDb();
   const questionMap = new Map(db.questions.map((q) => [q.id, q]));
@@ -45,6 +69,9 @@ export async function GET(request: Request) {
   db.responses
     .filter((response) => response.status === "completed")
     .filter((response) => teamIds.has(response.employeeId))
+    .filter((response) =>
+      isInRange(response.completedAt ?? response.lastActivityAt, startDate, endDate)
+    )
     .forEach((response) => {
       const employeeRecord = db.employees.find(
         (item) => item.id === response.employeeId

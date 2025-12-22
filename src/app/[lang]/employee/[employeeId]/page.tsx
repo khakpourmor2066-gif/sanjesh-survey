@@ -40,10 +40,25 @@ export default function EmployeeDashboard({
   const [report, setReport] = useState<ReportPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [showLoginLink, setShowLoginLink] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
+        const sessionRes = await fetch("/api/portal/me");
+        if (!sessionRes.ok) {
+          setShowLoginLink(true);
+          throw new Error("unauthorized");
+        }
+        const session = (await sessionRes.json()) as {
+          role: string;
+          employeeId?: string;
+        };
+        if (session.role !== "employee" || session.employeeId !== employeeId) {
+          setAccessDenied(true);
+          throw new Error("unauthorized");
+        }
         const res = await fetch(
           `/api/reports/employee?employeeId=${encodeURIComponent(employeeId)}`
         );
@@ -75,7 +90,17 @@ export default function EmployeeDashboard({
     return (
       <main className="orbit min-h-screen px-6 py-10 text-[var(--ink)]">
         <div className="mx-auto max-w-4xl text-center text-sm text-rose-600">
-          {error || t.problem}
+          {accessDenied ? t.portalAccessDenied : error || t.problem}
+          {showLoginLink ? (
+            <div className="mt-4">
+              <Link
+                href="/portal/login"
+                className="inline-flex rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-900"
+              >
+                {t.portalLogin}
+              </Link>
+            </div>
+          ) : null}
         </div>
       </main>
     );

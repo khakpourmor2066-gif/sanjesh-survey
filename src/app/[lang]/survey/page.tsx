@@ -38,6 +38,13 @@ export default function SurveyPage({
   const totalSteps = questions.length + 1;
   const allowEdit = response?.status === "completed";
   const isFinalStep = currentIndex === questions.length;
+  const answeredCount = questions.filter((question) => {
+    const current = answers[question.id];
+    if (!current) return false;
+    if (question.type === "rating") return Boolean(current.score);
+    if (question.type === "text") return Boolean(current.textValue?.trim());
+    return current.yesNoValue !== undefined;
+  }).length;
 
   const currentQuestion = useMemo(
     () => questions[currentIndex],
@@ -381,6 +388,10 @@ export default function SurveyPage({
                       }
                     )}
                   </div>
+                  <div className="flex items-center justify-between text-xs text-[var(--muted)]">
+                    <span>{t.poor}</span>
+                    <span>{t.excellent}</span>
+                  </div>
                   <textarea
                     value={answers[currentQuestion.id]?.comment ?? ""}
                     onChange={(event) => handleComment(event.target.value)}
@@ -435,6 +446,52 @@ export default function SurveyPage({
             <div className="mt-8 grid gap-6">
               <h2 className="text-2xl font-semibold">{t.finalNoteTitle}</h2>
               <p className="text-sm text-[var(--muted)]">{t.finalNoteText}</p>
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
+                  <span>{t.reviewAnswers}</span>
+                  <span>
+                    {t.answeredCount}: {answeredCount}/{questions.length}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {questions.map((question, index) => {
+                    const current = answers[question.id];
+                    let answerLabel = t.notAnswered;
+                    if (question.type === "rating" && current?.score) {
+                      answerLabel = String(current.score);
+                    } else if (question.type === "text" && current?.textValue) {
+                      answerLabel = current.textValue;
+                    } else if (question.type === "yes_no") {
+                      if (current?.yesNoValue === true) answerLabel = t.yes;
+                      if (current?.yesNoValue === false) answerLabel = t.no;
+                    }
+                    return (
+                      <div
+                        key={question.id}
+                        className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-[var(--ink)]">
+                            {question.text[lang]}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentIndex(index);
+                            }}
+                            className="text-xs font-semibold text-[var(--accent-strong)]"
+                          >
+                            {t.edit}
+                          </button>
+                        </div>
+                        <p className="mt-2 text-xs text-[var(--muted)]">
+                          {answerLabel}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               <textarea
                 value={finalComment}
                 onChange={(event) => setFinalComment(event.target.value)}

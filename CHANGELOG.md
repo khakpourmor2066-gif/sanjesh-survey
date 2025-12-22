@@ -11,6 +11,10 @@ All notable changes to this project are documented in this file.
 - Added employee report API endpoint for dashboard data.
 - Enhanced admin reports with summary KPIs, top/low performers, and loading states.
 - Added employee dashboard link in employee list.
+- Added portal login for employee/supervisor dashboards with role-based access.
+- Added supervisor dashboard for team-only reporting.
+- Added date range filters plus Excel/PDF export for admin reports.
+- Added survey answer summary before final submission.
 
 ## 2025-12-21
 - Deployed Phase 1 MVP on Vercel with stable alias setup.

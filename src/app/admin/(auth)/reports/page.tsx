@@ -46,10 +46,15 @@ export default function ReportsAdmin() {
   const [supervisors, setSupervisors] = useState<User[]>([]);
   const [selectedSupervisor, setSelectedSupervisor] = useState("");
   const [exportMessage, setExportMessage] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     const loadManager = async () => {
-      const res = await fetch("/api/reports/manager");
+      const params = new URLSearchParams();
+      if (startDate) params.set("start", startDate);
+      if (endDate) params.set("end", endDate);
+      const res = await fetch(`/api/reports/manager?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setManager(data);
@@ -65,7 +70,7 @@ export default function ReportsAdmin() {
     };
     loadManager().catch(() => null);
     loadSupervisors().catch(() => null);
-  }, []);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     if (!selectedSupervisor) {
@@ -74,11 +79,12 @@ export default function ReportsAdmin() {
     }
     const loadSupervisor = async () => {
       setSupervisorLoading(true);
-      const res = await fetch(
-        `/api/reports/supervisor?supervisorId=${encodeURIComponent(
-          selectedSupervisor
-        )}`
-      );
+      const params = new URLSearchParams({
+        supervisorId: selectedSupervisor,
+      });
+      if (startDate) params.set("start", startDate);
+      if (endDate) params.set("end", endDate);
+      const res = await fetch(`/api/reports/supervisor?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setSupervisor(data);
@@ -168,6 +174,62 @@ export default function ReportsAdmin() {
     setTimeout(() => setExportMessage(""), 2000);
   };
 
+  const exportExcel = async () => {
+    if (!manager) return;
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.utils.book_new();
+    const employeeRows = [
+      ["employeeId", "name_fa", "department_fa", "averageScore", "responseCount"],
+      ...manager.employees.map((emp) => [
+        emp.employeeId,
+        emp.name?.fa ?? "",
+        emp.department?.fa ?? "",
+        emp.averageScore.toFixed(2),
+        String(emp.responseCount),
+      ]),
+    ];
+    const questionRows = [
+      ["questionId", "text_fa", "type", "averageScore", "count"],
+      ...manager.questions.map((q) => [
+        q.questionId,
+        q.text?.fa ?? "",
+        q.type ?? "",
+        q.averageScore.toFixed(2),
+        String(q.count),
+      ]),
+    ];
+    const dailyRows = [
+      ["date", "averageScore", "count"],
+      ...manager.daily.map((d) => [
+        d.date,
+        d.averageScore.toFixed(2),
+        String(d.count),
+      ]),
+    ];
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet(employeeRows),
+      "Employees"
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet(questionRows),
+      "Questions"
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet(dailyRows),
+      "Daily"
+    );
+    XLSX.writeFile(workbook, "manager_report.xlsx");
+    setExportMessage("فایل اکسل گزارش مدیریتی دانلود شد.");
+    setTimeout(() => setExportMessage(""), 2000);
+  };
+
+  const exportPdf = () => {
+    window.print();
+  };
+
   const totalResponses = manager
     ? manager.employees.reduce((sum, emp) => sum + emp.responseCount, 0)
     : 0;
@@ -203,6 +265,20 @@ export default function ReportsAdmin() {
           >
             خروجی CSV مدیریت
           </button>
+          <button
+            type="button"
+            onClick={exportExcel}
+            className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-900"
+          >
+            خروجی Excel
+          </button>
+          <button
+            type="button"
+            onClick={exportPdf}
+            className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-900"
+          >
+            خروجی PDF
+          </button>
           {selectedSupervisor ? (
             <button
               type="button"
@@ -215,6 +291,21 @@ export default function ReportsAdmin() {
           {exportMessage ? (
             <span className="text-xs text-emerald-600">{exportMessage}</span>
           ) : null}
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <span>فیلتر بازه زمانی:</span>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(event) => setStartDate(event.target.value)}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-xs"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(event) => setEndDate(event.target.value)}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-xs"
+          />
         </div>
       </div>
 

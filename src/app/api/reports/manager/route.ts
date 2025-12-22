@@ -8,10 +8,30 @@ type DailyBucket = {
   count: number;
 };
 
-export async function GET() {
+function parseRange(searchParams: URLSearchParams) {
+  const start = searchParams.get("start");
+  const end = searchParams.get("end");
+  const startDate = start ? new Date(`${start}T00:00:00.000Z`) : null;
+  const endDate = end ? new Date(`${end}T23:59:59.999Z`) : null;
+  return { startDate, endDate };
+}
+
+function isInRange(dateValue: string | undefined, start: Date | null, end: Date | null) {
+  if (!dateValue) return false;
+  const time = new Date(dateValue).getTime();
+  if (Number.isNaN(time)) return false;
+  if (start && time < start.getTime()) return false;
+  if (end && time > end.getTime()) return false;
+  return true;
+}
+
+export async function GET(request: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+
+  const { searchParams } = new URL(request.url);
+  const { startDate, endDate } = parseRange(searchParams);
 
   const db = readDb();
   const questionMap = new Map(db.questions.map((q) => [q.id, q]));
@@ -38,6 +58,9 @@ export async function GET() {
 
   db.responses
     .filter((response) => response.status === "completed")
+    .filter((response) =>
+      isInRange(response.completedAt ?? response.lastActivityAt, startDate, endDate)
+    )
     .forEach((response) => {
       const employeeRecord = db.employees.find(
         (item) => item.id === response.employeeId
