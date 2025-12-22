@@ -456,7 +456,7 @@ export default function SurveyPage({
                 <div className="mt-4 grid gap-3">
                   {questions.map((question, index) => {
                     const current = answers[question.id];
-                    let answerLabel = t.notAnswered;
+                    let answerLabel: string = t.notAnswered;
                     if (question.type === "rating" && current?.score) {
                       answerLabel = String(current.score);
                     } else if (question.type === "text" && current?.textValue) {
