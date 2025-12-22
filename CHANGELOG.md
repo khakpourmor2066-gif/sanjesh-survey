@@ -7,6 +7,10 @@ All notable changes to this project are documented in this file.
 - Improved admin UX: loading/empty states and safer form submission in Employees/Questions/Roles pages.
 - Improved auth UX: disabled login without employeeId and clearer loading feedback.
 - Survey cookies now use secure flags in production.
+- Added employee dashboard with KPIs, trends, and recent feedback.
+- Added employee report API endpoint for dashboard data.
+- Enhanced admin reports with summary KPIs, top/low performers, and loading states.
+- Added employee dashboard link in employee list.
 
 ## 2025-12-21
 - Deployed Phase 1 MVP on Vercel with stable alias setup.

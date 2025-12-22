@@ -66,6 +66,12 @@ export default async function EmployeesPage({
                   >
                     {t.startSurvey}
                   </Link>
+                  <Link
+                    href={`/${lang}/employee/${employee.id}`}
+                    className="mt-3 inline-flex rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-900"
+                  >
+                    {t.viewDashboard}
+                  </Link>
                 </div>
                 <div className="flex items-center justify-center rounded-2xl bg-white p-4 shadow">
                   <img

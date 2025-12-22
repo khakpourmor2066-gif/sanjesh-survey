@@ -37,10 +37,12 @@ export default function ReportsAdmin() {
     questions: QuestionReport[];
     daily: DailyReport[];
   } | null>(null);
+  const [managerLoading, setManagerLoading] = useState(true);
   const [supervisor, setSupervisor] = useState<{
     employees: EmployeeReport[];
     daily: DailyReport[];
   } | null>(null);
+  const [supervisorLoading, setSupervisorLoading] = useState(false);
   const [supervisors, setSupervisors] = useState<User[]>([]);
   const [selectedSupervisor, setSelectedSupervisor] = useState("");
   const [exportMessage, setExportMessage] = useState("");
@@ -52,6 +54,7 @@ export default function ReportsAdmin() {
         const data = await res.json();
         setManager(data);
       }
+      setManagerLoading(false);
     };
     const loadSupervisors = async () => {
       const res = await fetch("/api/admin/users");
@@ -70,6 +73,7 @@ export default function ReportsAdmin() {
       return;
     }
     const loadSupervisor = async () => {
+      setSupervisorLoading(true);
       const res = await fetch(
         `/api/reports/supervisor?supervisorId=${encodeURIComponent(
           selectedSupervisor
@@ -79,6 +83,7 @@ export default function ReportsAdmin() {
         const data = await res.json();
         setSupervisor(data);
       }
+      setSupervisorLoading(false);
     };
     loadSupervisor().catch(() => null);
   }, [selectedSupervisor]);
@@ -163,6 +168,26 @@ export default function ReportsAdmin() {
     setTimeout(() => setExportMessage(""), 2000);
   };
 
+  const totalResponses = manager
+    ? manager.employees.reduce((sum, emp) => sum + emp.responseCount, 0)
+    : 0;
+  const weightedAverage = manager && totalResponses
+    ? manager.employees.reduce(
+        (sum, emp) => sum + emp.averageScore * emp.responseCount,
+        0
+      ) / totalResponses
+    : 0;
+  const topEmployees = manager
+    ? [...manager.employees]
+        .sort((a, b) => b.averageScore - a.averageScore)
+        .slice(0, 3)
+    : [];
+  const lowEmployees = manager
+    ? [...manager.employees]
+        .sort((a, b) => a.averageScore - b.averageScore)
+        .slice(0, 3)
+    : [];
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
       <div className="rounded-3xl bg-white p-8 shadow">
@@ -193,12 +218,35 @@ export default function ReportsAdmin() {
         </div>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-3xl bg-white p-6 shadow">
+          <p className="text-xs text-slate-500">میانگین کل</p>
+          <p className="mt-3 text-3xl font-semibold">
+            {weightedAverage ? weightedAverage.toFixed(2) : "—"}
+          </p>
+        </div>
+        <div className="rounded-3xl bg-white p-6 shadow">
+          <p className="text-xs text-slate-500">تعداد کل پاسخ‌ها</p>
+          <p className="mt-3 text-3xl font-semibold">
+            {totalResponses || "—"}
+          </p>
+        </div>
+        <div className="rounded-3xl bg-white p-6 shadow">
+          <p className="text-xs text-slate-500">تعداد کارمندان</p>
+          <p className="mt-3 text-3xl font-semibold">
+            {manager?.employees.length ?? "—"}
+          </p>
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-3xl bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold">کارمندان برتر/ضعیف</h2>
+          <h2 className="text-lg font-semibold">کارمندان برتر</h2>
           <div className="mt-4 space-y-3">
-            {manager?.employees.length ? (
-              manager.employees.map((emp) => (
+            {managerLoading ? (
+              <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+            ) : topEmployees.length ? (
+              topEmployees.map((emp) => (
                 <div
                   key={emp.employeeId}
                   className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-sm"
@@ -228,49 +276,88 @@ export default function ReportsAdmin() {
         </div>
 
         <div className="rounded-3xl bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold">میانگین روزانه</h2>
+          <h2 className="text-lg font-semibold">کارمندان نیازمند توجه</h2>
           <div className="mt-4 space-y-3">
-            {manager?.daily.length ? (
-              manager.daily.map((row) => (
+            {managerLoading ? (
+              <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+            ) : lowEmployees.length ? (
+              lowEmployees.map((emp) => (
                 <div
-                  key={row.date}
+                  key={emp.employeeId}
                   className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-sm"
                 >
-                  <span>{row.date}</span>
-                  <span className="font-semibold">
-                    {row.averageScore.toFixed(2)}
-                  </span>
+                  <div>
+                    <p className="font-semibold">
+                      {emp.name?.fa ?? emp.employeeId}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {emp.department?.fa ?? ""}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">
+                      {emp.averageScore.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {emp.responseCount} پاسخ
+                    </p>
+                  </div>
                 </div>
               ))
             ) : (
               <p className="text-sm text-slate-500">داده‌ای ثبت نشده است.</p>
             )}
           </div>
-          {manager?.daily.length ? (
-            <div className="mt-6 grid gap-2">
-              {manager.daily.map((row) => (
-                <div key={row.date} className="flex items-center gap-3 text-xs">
-                  <span className="w-16 text-slate-500">{row.date}</span>
-                  <div className="h-2 flex-1 rounded-full bg-slate-100">
-                    <div
-                      className="h-2 rounded-full bg-slate-900"
-                      style={{ width: `${Math.min(row.averageScore * 10, 100)}%` }}
-                    />
-                  </div>
-                  <span className="w-10 text-right text-slate-500">
-                    {row.averageScore.toFixed(1)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : null}
         </div>
+      </div>
+
+      <div className="rounded-3xl bg-white p-6 shadow">
+        <h2 className="text-lg font-semibold">میانگین روزانه</h2>
+        <div className="mt-4 space-y-3">
+          {managerLoading ? (
+            <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+          ) : manager?.daily.length ? (
+            manager.daily.map((row) => (
+              <div
+                key={row.date}
+                className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+              >
+                <span>{row.date}</span>
+                <span className="font-semibold">
+                  {row.averageScore.toFixed(2)}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-slate-500">داده‌ای ثبت نشده است.</p>
+          )}
+        </div>
+        {manager?.daily.length ? (
+          <div className="mt-6 grid gap-2">
+            {manager.daily.map((row) => (
+              <div key={row.date} className="flex items-center gap-3 text-xs">
+                <span className="w-16 text-slate-500">{row.date}</span>
+                <div className="h-2 flex-1 rounded-full bg-slate-100">
+                  <div
+                    className="h-2 rounded-full bg-slate-900"
+                    style={{ width: `${Math.min(row.averageScore * 10, 100)}%` }}
+                  />
+                </div>
+                <span className="w-10 text-right text-slate-500">
+                  {row.averageScore.toFixed(1)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-3xl bg-white p-6 shadow">
         <h2 className="text-lg font-semibold">گزارش سوالات</h2>
         <div className="mt-4 grid gap-3">
-          {manager?.questions.length ? (
+          {managerLoading ? (
+            <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+          ) : manager?.questions.length ? (
             manager.questions.map((q) => (
               <div
                 key={q.questionId}
@@ -311,7 +398,9 @@ export default function ReportsAdmin() {
 
         {selectedSupervisor ? (
           <div className="mt-6 grid gap-4">
-            {supervisor?.employees.length ? (
+            {supervisorLoading ? (
+              <p className="text-sm text-slate-500">در حال بارگذاری...</p>
+            ) : supervisor?.employees.length ? (
               supervisor.employees.map((emp) => (
                 <div
                   key={emp.employeeId}
