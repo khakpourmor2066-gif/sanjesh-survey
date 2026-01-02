@@ -19,6 +19,7 @@ All notable changes to this project are documented in this file.
 - Added portal access checks for employee reports.
 - Added offline/save status indicators in survey flow.
 - Added interactive charts for manager, supervisor, and employee dashboards.
+- Fixed survey API calls to include credentials and improved save error messaging.
 - Fixed auth fetch to always include credentials for setting survey session.
 
 ## 2025-12-21

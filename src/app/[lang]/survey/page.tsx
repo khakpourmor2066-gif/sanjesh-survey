@@ -68,7 +68,8 @@ export default function SurveyPage({
       try {
         await fetchQuestions();
         const response = await fetch(
-          `/api/survey/session${editToken ? `?editToken=${editToken}` : ""}`
+          `/api/survey/session${editToken ? `?editToken=${editToken}` : ""}`,
+          { credentials: "include" }
         );
         if (!response.ok) {
           throw new Error("session");
@@ -118,9 +119,11 @@ export default function SurveyPage({
   useEffect(() => {
     const handlePageHide = () => {
       if (completedRef.current) return;
-      fetch("/api/survey/abandon", { method: "POST", keepalive: true }).catch(
-        () => null
-      );
+      fetch("/api/survey/abandon", {
+        method: "POST",
+        keepalive: true,
+        credentials: "include",
+      }).catch(() => null);
     };
     window.addEventListener("pagehide", handlePageHide);
     return () => window.removeEventListener("pagehide", handlePageHide);
@@ -142,6 +145,7 @@ export default function SurveyPage({
     setSaveStatus("saving");
     const res = await fetch("/api/survey/answer", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         questionId,
@@ -162,6 +166,7 @@ export default function SurveyPage({
     }
     const res = await fetch("/api/survey/progress", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ index }),
     });
@@ -266,12 +271,13 @@ export default function SurveyPage({
 
   const handleFinish = async () => {
     if (!isOnline) {
-      setLocalError(t.problem);
+      setLocalError(t.offlineNotice);
       return;
     }
     setSubmitting(true);
     const res = await fetch("/api/survey/finish", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ finalComment }),
     });
@@ -560,7 +566,7 @@ export default function SurveyPage({
                 : saveStatus === "saved"
                   ? t.saved
                   : saveStatus === "error"
-                    ? t.offlineNotice
+                    ? t.saveError
                     : ""}
             </div>
             {isFinalStep ? (
