@@ -29,6 +29,7 @@ export default function AuthPage({
     try {
       const requestResponse = await fetch("/api/oauth/request", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           employeeId,
@@ -51,6 +52,7 @@ export default function AuthPage({
 
       const verifyResponse = await fetch("/api/oauth/verify", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: requestData.payload }),
       });
