@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import ReportLineChart from "@/components/ReportLineChart";
 
 type EmployeeReport = {
   employeeId: string;
@@ -79,6 +80,15 @@ export default function SupervisorDashboard() {
       </main>
     );
   }
+
+  const dailyLabels = useMemo(
+    () => report.daily.map((row) => row.date),
+    [report]
+  );
+  const dailyValues = useMemo(
+    () => report.daily.map((row) => Number(row.averageScore.toFixed(2))),
+    [report]
+  );
 
   return (
     <main className="orbit min-h-screen px-6 py-10 text-[var(--ink)]">
@@ -162,6 +172,15 @@ export default function SupervisorDashboard() {
               </p>
             )}
           </div>
+          {dailyLabels.length ? (
+            <div className="mt-6">
+              <ReportLineChart
+                labels={dailyLabels}
+                values={dailyValues}
+                label="میانگین روزانه"
+              />
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

@@ -18,6 +18,7 @@ All notable changes to this project are documented in this file.
 - Added report caching and date-range comparisons.
 - Added portal access checks for employee reports.
 - Added offline/save status indicators in survey flow.
+- Added interactive charts for manager, supervisor, and employee dashboards.
 
 ## 2025-12-21
 - Deployed Phase 1 MVP on Vercel with stable alias setup.

@@ -1,8 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getDictionary, type Lang } from "@/lib/i18n";
+import ReportLineChart from "@/components/ReportLineChart";
 
 type Employee = {
   id: string;
@@ -106,6 +107,15 @@ export default function EmployeeDashboard({
     );
   }
 
+  const dailyLabels = useMemo(
+    () => report.daily.map((row) => row.date),
+    [report]
+  );
+  const dailyValues = useMemo(
+    () => report.daily.map((row) => Number(row.averageScore.toFixed(2))),
+    [report]
+  );
+
   const name =
     report.employee.name[lang] ??
     report.employee.name.fa ??
@@ -196,6 +206,15 @@ export default function EmployeeDashboard({
               {t.noFeedback}
             </p>
           )}
+          {dailyLabels.length ? (
+            <div className="mt-6">
+              <ReportLineChart
+                labels={dailyLabels}
+                values={dailyValues}
+                label={t.trendTitle}
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="surface rounded-[28px] p-6">

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import ReportLineChart from "@/components/ReportLineChart";
+import ReportBarChart from "@/components/ReportBarChart";
 
 type EmployeeReport = {
   employeeId: string;
@@ -268,6 +270,26 @@ export default function ReportsAdmin() {
         .slice(0, 3)
     : [];
 
+  const dailyLabels = useMemo(
+    () => (manager?.daily ?? []).map((row) => row.date),
+    [manager]
+  );
+  const dailyValues = useMemo(
+    () => (manager?.daily ?? []).map((row) => Number(row.averageScore.toFixed(2))),
+    [manager]
+  );
+  const topLabels = useMemo(
+    () =>
+      topEmployees.map(
+        (emp) => emp.name?.fa ?? emp.employeeId
+      ),
+    [topEmployees]
+  );
+  const topValues = useMemo(
+    () => topEmployees.map((emp) => Number(emp.averageScore.toFixed(2))),
+    [topEmployees]
+  );
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
       <div className="rounded-3xl bg-white p-8 shadow">
@@ -396,6 +418,15 @@ export default function ReportsAdmin() {
               <p className="text-sm text-slate-500">داده‌ای ثبت نشده است.</p>
             )}
           </div>
+          {topEmployees.length ? (
+            <div className="mt-6">
+              <ReportBarChart
+                labels={topLabels}
+                values={topValues}
+                label="میانگین امتیاز"
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="rounded-3xl bg-white p-6 shadow">
@@ -472,6 +503,15 @@ export default function ReportsAdmin() {
                 </span>
               </div>
             ))}
+          </div>
+        ) : null}
+        {dailyLabels.length ? (
+          <div className="mt-6">
+            <ReportLineChart
+              labels={dailyLabels}
+              values={dailyValues}
+              label="میانگین روزانه"
+            />
           </div>
         ) : null}
       </div>
