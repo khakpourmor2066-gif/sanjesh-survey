@@ -140,7 +140,7 @@ export default function SurveyPage({
   ) => {
     if (!isOnline) {
       setSaveStatus("error");
-      return;
+      return false;
     }
     setSaveStatus("saving");
     const res = await fetch("/api/survey/answer", {
@@ -157,6 +157,7 @@ export default function SurveyPage({
       }),
     });
     setSaveStatus(res.ok ? "saved" : "error");
+    return res.ok;
   };
 
   const saveProgress = async (index: number) => {
@@ -185,7 +186,10 @@ export default function SurveyPage({
         yesNoValue: prev[currentQuestion.id]?.yesNoValue,
       },
     }));
-    await saveAnswer(currentQuestion.id, { score });
+    const saved = await saveAnswer(currentQuestion.id, { score });
+    if (saved) {
+      await goToStep(Math.min(currentIndex + 1, totalSteps - 1));
+    }
   };
 
   const handleComment = (value: string) => {
@@ -239,7 +243,10 @@ export default function SurveyPage({
         yesNoValue: value,
       },
     }));
-    await saveAnswer(currentQuestion.id, { yesNoValue: value });
+    const saved = await saveAnswer(currentQuestion.id, { yesNoValue: value });
+    if (saved) {
+      await goToStep(Math.min(currentIndex + 1, totalSteps - 1));
+    }
   };
 
   const goToStep = async (nextIndex: number) => {
