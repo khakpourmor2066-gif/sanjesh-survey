@@ -186,10 +186,8 @@ export default function SurveyPage({
         yesNoValue: prev[currentQuestion.id]?.yesNoValue,
       },
     }));
-    const saved = await saveAnswer(currentQuestion.id, { score });
-    if (saved) {
-      await goToStep(Math.min(currentIndex + 1, totalSteps - 1));
-    }
+    await saveAnswer(currentQuestion.id, { score });
+    await goToStep(Math.min(currentIndex + 1, totalSteps - 1));
   };
 
   const handleComment = (value: string) => {
@@ -243,10 +241,8 @@ export default function SurveyPage({
         yesNoValue: value,
       },
     }));
-    const saved = await saveAnswer(currentQuestion.id, { yesNoValue: value });
-    if (saved) {
-      await goToStep(Math.min(currentIndex + 1, totalSteps - 1));
-    }
+    await saveAnswer(currentQuestion.id, { yesNoValue: value });
+    await goToStep(Math.min(currentIndex + 1, totalSteps - 1));
   };
 
   const goToStep = async (nextIndex: number) => {
