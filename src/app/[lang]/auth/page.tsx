@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getDictionary, type Lang } from "@/lib/i18n";
 
@@ -17,6 +17,17 @@ export default function AuthPage({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const canSubmit = Boolean(employeeId);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter") return;
+      if (!canSubmit || loading) return;
+      event.preventDefault();
+      handleLogin();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [canSubmit, loading]);
 
   const handleLogin = async () => {
     if (!employeeId) {
@@ -83,6 +94,7 @@ export default function AuthPage({
             <button
               type="button"
               onClick={handleLogin}
+              autoFocus
               className="rounded-full bg-[var(--accent-strong)] px-8 py-3 text-center text-sm font-semibold text-white shadow hover:brightness-110 disabled:opacity-70"
               disabled={loading || !canSubmit}
             >

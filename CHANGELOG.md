@@ -31,6 +31,7 @@ All notable changes to this project are documented in this file.
 - Added primary/secondary question support with a 5-question limit.
 - Showed finish option after completing all primary questions.
 - Added keyboard Enter behavior to return to the previous question after rating.
+- Enabled Enter key to trigger login on the auth page.
 
 ## 2025-12-21
 - Deployed Phase 1 MVP on Vercel with stable alias setup.
