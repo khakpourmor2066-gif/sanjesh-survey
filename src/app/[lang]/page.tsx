@@ -25,7 +25,6 @@ export default function Home({ params }: { params: Promise<{ lang: Lang }> }) {
               {t.title}
             </h1>
             <p className="mt-2 text-sm text-[var(--muted)]">{t.subtitle}</p>
-            <p className="mt-2 text-xs text-[var(--muted)]">deploy-check-001</p>
           </div>
 
           <div className="mt-6 flex flex-col items-center gap-3">
