@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { getDictionary, type Lang } from "@/lib/i18n";
 import { readDb } from "@/lib/storage";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function EmployeesPage({
   params,
@@ -8,6 +13,11 @@ export default async function EmployeesPage({
   params: Promise<{ lang: Lang }>;
 }) {
   const { lang } = await params;
+  const cookieStore = await cookies();
+  const isAuthed = cookieStore.get("admin_session")?.value === "1";
+  if (!isAuthed) {
+    redirect("/admin/login");
+  }
   const t = getDictionary(lang);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
   const db = readDb();

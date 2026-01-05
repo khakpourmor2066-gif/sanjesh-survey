@@ -12,6 +12,8 @@ type Employee = {
 export default function QrAdmin() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [message, setMessage] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
+  const [language, setLanguage] = useState("fa");
 
   const load = async () => {
     const res = await fetch("/api/admin/employees");
@@ -38,6 +40,16 @@ export default function QrAdmin() {
     }
   };
 
+  const openAuth = () => {
+    const trimmed = employeeId.trim();
+    if (!trimmed) {
+      setMessage("کد کارمند را وارد کنید.");
+      return;
+    }
+    const url = `${origin}/${language}/auth?employeeId=${encodeURIComponent(trimmed)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
       <div className="rounded-3xl bg-white p-8 shadow">
@@ -45,6 +57,35 @@ export default function QrAdmin() {
         <p className="mt-2 text-sm text-slate-500">
           کد QR اختصاصی هر کارمند را مشاهده و لینک را کپی کنید.
         </p>
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-semibold text-slate-700">
+            ورود با کد کارمند (فقط مدیران)
+          </p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <input
+              value={employeeId}
+              onChange={(event) => setEmployeeId(event.target.value)}
+              placeholder="مثال: EMP-001"
+              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm"
+            />
+            <select
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm"
+            >
+              <option value="fa">فارسی</option>
+              <option value="en">English</option>
+              <option value="ar">العربية</option>
+            </select>
+            <button
+              type="button"
+              onClick={openAuth}
+              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white"
+            >
+              ورود
+            </button>
+          </div>
+        </div>
         {message ? (
           <p className="mt-3 text-sm font-medium text-emerald-600">{message}</p>
         ) : null}

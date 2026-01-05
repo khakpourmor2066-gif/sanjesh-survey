@@ -23,6 +23,12 @@ All notable changes to this project are documented in this file.
 - Added cookie-based survey recovery to prevent no_session on serverless deployments.
 - Fixed auth fetch to always include credentials for setting survey session.
 
+## 2026-01-04
+- Added QR camera scan flow for employee QR codes.
+- Added admin login entry on the home page and localized scan messaging.
+- Restricted `/[lang]/employees` to admin sessions only.
+- Added admin-only employee code entry inside the QR management page.
+
 ## 2025-12-21
 - Deployed Phase 1 MVP on Vercel with stable alias setup.
 - Added mock auth flow and OAuth payload verification.
