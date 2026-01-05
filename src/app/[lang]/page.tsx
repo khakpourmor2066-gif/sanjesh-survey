@@ -25,6 +25,7 @@ export default function Home({ params }: { params: Promise<{ lang: Lang }> }) {
               {t.title}
             </h1>
             <p className="mt-2 text-sm text-[var(--muted)]">{t.subtitle}</p>
+            <p className="mt-2 text-xs text-[var(--muted)]">deploy-check-001</p>
           </div>
 
           <div className="mt-6 flex flex-col items-center gap-3">
@@ -32,10 +33,6 @@ export default function Home({ params }: { params: Promise<{ lang: Lang }> }) {
               {t.selectLanguage}
             </p>
             <LanguageSwitcher lang={lang} />
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-slate-100 px-4 py-3 text-center text-sm text-slate-600">
-            {t.scanQr}
           </div>
 
           <div className="mt-6 flex flex-col gap-3">
