@@ -20,6 +20,7 @@ All notable changes to this project are documented in this file.
 - Added offline/save status indicators in survey flow.
 - Added interactive charts for manager, supervisor, and employee dashboards.
 - Fixed survey API calls to include credentials and improved save error messaging.
+- Added cookie-based survey recovery to prevent no_session on serverless deployments.
 - Fixed auth fetch to always include credentials for setting survey session.
 
 ## 2025-12-21

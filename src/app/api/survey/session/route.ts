@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import crypto from "crypto";
 import { readDb, writeDb } from "@/lib/storage";
 import type { SurveySession } from "@/lib/types";
+import { readSurveyResponseCookie, writeSurveyResponseCookie } from "@/lib/survey-cookie";
 
 const secureCookie =
   process.env.NODE_ENV === "production" ||
@@ -13,6 +14,9 @@ export async function GET(request: Request) {
   const db = readDb();
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("survey_session")?.value;
+  const responseCookie = readSurveyResponseCookie(
+    cookieStore.get("survey_response")?.value
+  );
   const { searchParams } = new URL(request.url);
   const editToken = searchParams.get("editToken");
   const loggedOut = cookieStore.get("survey_logged_out")?.value === "1";
@@ -24,6 +28,39 @@ export async function GET(request: Request) {
   let session = sessionId
     ? db.sessions.find((item) => item.id === sessionId)
     : undefined;
+
+  if (!session && responseCookie) {
+    const response = db.responses.find(
+      (item) => item.id === responseCookie.id
+    );
+    if (!response) {
+      db.responses.push(responseCookie);
+    }
+    const fallbackSessionId = sessionId ?? crypto.randomUUID();
+    session = {
+      id: fallbackSessionId,
+      customerId: responseCookie.customerId,
+      employeeId: responseCookie.employeeId,
+      groupId: responseCookie.groupId,
+      responseId: responseCookie.id,
+      createdAt: new Date().toISOString(),
+      lang: responseCookie.lang,
+    } satisfies SurveySession;
+    db.sessions.push(session);
+    writeDb(db);
+
+    const responseObj = NextResponse.json({
+      session,
+      response: responseCookie,
+    });
+    responseObj.cookies.set("survey_session", session.id, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: secureCookie,
+    });
+    return writeSurveyResponseCookie(responseObj, responseCookie);
+  }
 
   if (!session && editToken) {
     const response = db.responses.find(
@@ -56,7 +93,7 @@ export async function GET(request: Request) {
       path: "/",
       secure: secureCookie,
     });
-    return responseObj;
+    return writeSurveyResponseCookie(responseObj, response);
   }
 
   if (!session) {

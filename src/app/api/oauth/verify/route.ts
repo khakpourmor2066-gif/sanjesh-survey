@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { readDb, writeDb } from "@/lib/storage";
 import type { SurveyResponse, SurveySession } from "@/lib/types";
 import { verifyAuthPayload, type AuthPayload } from "@/lib/auth";
+import { writeSurveyResponseCookie } from "@/lib/survey-cookie";
 
 const TOKEN_TTL_MS = 5 * 60 * 1000;
 const DAILY_LIMIT_MS = 24 * 60 * 60 * 1000;
@@ -119,5 +120,5 @@ export async function POST(request: Request) {
     secure: secureCookie,
   });
 
-  return responseObj;
+  return writeSurveyResponseCookie(responseObj, response);
 }
