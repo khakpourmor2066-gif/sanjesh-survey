@@ -28,6 +28,9 @@ All notable changes to this project are documented in this file.
 - Added admin login entry on the home page and localized scan messaging.
 - Restricted `/[lang]/employees` to admin sessions only.
 - Added admin-only employee code entry inside the QR management page.
+- Added primary/secondary question support with a 5-question limit.
+- Showed finish option after completing all primary questions.
+- Added keyboard Enter behavior to return to the previous question after rating.
 
 ## 2025-12-21
 - Deployed Phase 1 MVP on Vercel with stable alias setup.

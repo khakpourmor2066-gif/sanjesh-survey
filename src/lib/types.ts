@@ -48,6 +48,7 @@ export type SurveyQuestion = {
   type: QuestionType;
   category: QuestionCategory;
   required: boolean;
+  isPrimary: boolean;
   order: number;
   active: boolean;
 };

@@ -49,6 +49,24 @@ export default function SurveyPage({
     return current.yesNoValue !== undefined;
   }).length;
 
+  const isAnswered = (question: SurveyQuestion) => {
+    const current = answers[question.id];
+    if (!current) return false;
+    if (question.type === "rating") return Boolean(current.score);
+    if (question.type === "text") return Boolean(current.textValue?.trim());
+    return current.yesNoValue !== undefined;
+  };
+
+  const primaryQuestions = useMemo(
+    () => questions.filter((question) => question.isPrimary),
+    [questions]
+  );
+  const primaryCompleted =
+    primaryQuestions.length > 0 &&
+    primaryQuestions.every((question) =>
+      question.required ? isAnswered(question) : true
+    );
+
   const currentQuestion = useMemo(
     () => questions[currentIndex],
     [currentIndex, questions]
@@ -115,6 +133,25 @@ export default function SurveyPage({
       window.removeEventListener("offline", updateStatus);
     };
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter") return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") {
+        return;
+      }
+      if (currentIndex <= 0) return;
+      const prevQuestion = questions[currentIndex - 1];
+      if (prevQuestion?.type === "rating" && answers[prevQuestion.id]?.score) {
+        event.preventDefault();
+        handlePrev();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [answers, currentIndex, handlePrev, questions]);
 
   useEffect(() => {
     const handlePageHide = () => {
@@ -582,13 +619,24 @@ export default function SurveyPage({
                 {submitting ? t.submitting : t.finish}
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white shadow hover:brightness-110"
-              >
-                {t.next}
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white shadow hover:brightness-110"
+                >
+                  {t.next}
+                </button>
+                {primaryCompleted ? (
+                  <button
+                    type="button"
+                    onClick={() => goToStep(questions.length)}
+                    className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:border-slate-900"
+                  >
+                    {t.finish}
+                  </button>
+                ) : null}
+              </div>
             )}
           </div>
         </div>

@@ -8,6 +8,7 @@ type Question = {
   type: "rating" | "text" | "yes_no";
   category: "general" | "employee_specific" | "feedback" | "service" | "additional";
   required: boolean;
+  isPrimary: boolean;
   order: number;
   active: boolean;
 };
@@ -17,6 +18,7 @@ type FormQuestion = {
   type: Question["type"];
   category: Question["category"];
   required: boolean;
+  isPrimary: boolean;
   order: number;
 };
 
@@ -25,6 +27,7 @@ const emptyQuestion: FormQuestion = {
   type: "rating",
   category: "general",
   required: true,
+  isPrimary: false,
   order: 1,
 };
 
@@ -51,6 +54,11 @@ export default function QuestionsAdmin() {
 
   const addQuestion = async () => {
     setMessage("");
+    const primaryCount = questions.filter((question) => question.isPrimary).length;
+    if (form.isPrimary && primaryCount >= 5) {
+      setMessage("حداکثر ۵ سوال اصلی مجاز است.");
+      return;
+    }
     const response = await fetch("/api/admin/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,6 +67,7 @@ export default function QuestionsAdmin() {
         type: form.type,
         category: form.category,
         required: form.required,
+        isPrimary: form.isPrimary,
         order: form.order,
       }),
     });
@@ -72,6 +81,11 @@ export default function QuestionsAdmin() {
   };
 
   const updateQuestion = async (question: Question) => {
+    const primaryCount = questions.filter((item) => item.isPrimary).length;
+    if (question.isPrimary && primaryCount > 5) {
+      setMessage("حداکثر ۵ سوال اصلی مجاز است.");
+      return;
+    }
     const response = await fetch("/api/admin/questions", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -82,6 +96,7 @@ export default function QuestionsAdmin() {
           type: question.type,
           category: question.category,
           required: question.required,
+          isPrimary: question.isPrimary,
           order: question.order,
           active: question.active,
         },
@@ -172,6 +187,16 @@ export default function QuestionsAdmin() {
               }
             />
             اجباری
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={form.isPrimary}
+              onChange={(event) =>
+                setForm({ ...form, isPrimary: event.target.checked })
+              }
+            />
+            سوال اصلی
           </label>
         </div>
         <button
@@ -345,6 +370,22 @@ export default function QuestionsAdmin() {
                     }}
                   />
                   اجباری
+                </label>
+                <label className="flex items-center gap-2 text-xs text-slate-500">
+                  <input
+                    type="checkbox"
+                    checked={question.isPrimary}
+                    onChange={(event) => {
+                      setQuestions((prev) =>
+                        prev.map((item) =>
+                          item.id === question.id
+                            ? { ...item, isPrimary: event.target.checked }
+                            : item
+                        )
+                      );
+                    }}
+                  />
+                  اصلی
                 </label>
               </div>
               <button

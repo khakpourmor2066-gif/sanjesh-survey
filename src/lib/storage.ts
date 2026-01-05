@@ -35,6 +35,14 @@ function seedQuestions(existing: SurveyQuestion[] | undefined) {
   }));
 }
 
+function normalizeQuestions(existing: SurveyQuestion[] | undefined) {
+  if (!existing) return seedQuestions(existing);
+  return existing.map((question) => ({
+    ...question,
+    isPrimary: question.isPrimary ?? question.order <= 5,
+  }));
+}
+
 function seedUsers(existing: User[] | undefined) {
   if (existing && existing.length > 0) return existing;
   const defaults: User[] = [
@@ -50,7 +58,7 @@ function normalizeDb(db: Partial<SurveyDb>): SurveyDb {
     sessions: db.sessions ?? [],
     responses: db.responses ?? [],
     employees: seedEmployees(db.employees),
-    questions: seedQuestions(db.questions),
+    questions: normalizeQuestions(db.questions),
     users: seedUsers(db.users),
   };
 }

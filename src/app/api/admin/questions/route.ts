@@ -10,6 +10,7 @@ type QuestionPayload = {
   type?: QuestionType;
   category?: QuestionCategory;
   required?: boolean;
+  isPrimary?: boolean;
   order?: number;
   active?: boolean;
 };
@@ -34,6 +35,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "missing_fields" }, { status: 400 });
   }
   const db = readDb();
+  const primaryCount = db.questions.filter((question) => question.isPrimary).length;
+  if (body.isPrimary && primaryCount >= 5) {
+    return NextResponse.json({ error: "primary_limit" }, { status: 400 });
+  }
   const nextOrder =
     body.order ?? (db.questions.length ? Math.max(...db.questions.map((q) => q.order)) + 1 : 1);
   const question: SurveyQuestion = {
@@ -42,6 +47,7 @@ export async function POST(request: Request) {
     type: body.type,
     category: body.category,
     required: body.required ?? true,
+    isPrimary: body.isPrimary ?? false,
     order: nextOrder,
     active: body.active ?? true,
   };
@@ -70,10 +76,18 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
+  if (body.updates.isPrimary !== undefined) {
+    const primaryCount = db.questions.filter((item) => item.isPrimary).length;
+    if (body.updates.isPrimary && !question.isPrimary && primaryCount >= 5) {
+      return NextResponse.json({ error: "primary_limit" }, { status: 400 });
+    }
+  }
+
   if (body.updates.text) question.text = body.updates.text;
   if (body.updates.type) question.type = body.updates.type;
   if (body.updates.category) question.category = body.updates.category;
   if (body.updates.required !== undefined) question.required = body.updates.required;
+  if (body.updates.isPrimary !== undefined) question.isPrimary = body.updates.isPrimary;
   if (body.updates.order !== undefined) question.order = body.updates.order;
   if (body.updates.active !== undefined) question.active = body.updates.active;
 
